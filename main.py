@@ -1,6 +1,4 @@
-# i'm not the author of the code below
-# code source:
-# https://www.youtube.com/watch?v=6ZyylFcjfIg
+# code was modifed from:
 # https://github.com/techwithtim/2048-In-Python
 
 import pygame
@@ -12,8 +10,8 @@ pygame.init()
 FPS = 60
 
 WIDTH, HEIGHT = 800, 800
-ROWS = 5
-COLS = 5
+ROWS = 4
+COLS = 4
 
 RECT_HEIGHT = HEIGHT // ROWS
 RECT_WIDTH = WIDTH // COLS
@@ -27,7 +25,7 @@ FONT = pygame.font.SysFont("comicsans", 60, bold=True)
 MOVE_VEL = 40
 
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("2048")
+pygame.display.set_caption("2048-embd")
 
 
 class Tile:
@@ -51,15 +49,22 @@ class Tile:
         self.y = row * RECT_HEIGHT
 
     def get_color(self):
-        color_index = int(math.log2(self.value)) - 1
-        color = self.COLORS[color_index]
-        return color
+        # color_index = int(math.log2(self.value)) - 1
+        # color = self.COLORS[color_index]
+        # return color
+        if self.value == 0:
+            return (237, 229, 218)
+        else:
+            return (238, 225, 201)
 
     def draw(self, window):
         color = self.get_color()
         pygame.draw.rect(window, color, (self.x, self.y, RECT_WIDTH, RECT_HEIGHT))
 
-        text = FONT.render(str(self.value), 1, FONT_COLOR)
+        if self.value != 0:
+            text = FONT.render(str(self.value), 1, FONT_COLOR)
+        else:
+            text = FONT.render("?", 1, FONT_COLOR)
         window.blit(
             text,
             (
@@ -179,14 +184,16 @@ def move_tiles(window, tiles, clock, direction):
             if not next_tile:
                 tile.move(delta)
             elif (
-                tile.value == next_tile.value
+                tile.value != next_tile.value
+                and tile.value != 0
+                and next_tile.value != 0
                 and tile not in blocks
                 and next_tile not in blocks
             ):
                 if merge_check(tile, next_tile):
                     tile.move(delta)
                 else:
-                    next_tile.value *= 2
+                    next_tile.value = random.randrange(1, 99)
                     sorted_tiles.pop(i)
                     blocks.add(next_tile)
             elif move_check(tile, next_tile):
@@ -203,12 +210,21 @@ def move_tiles(window, tiles, clock, direction):
 
 
 def end_move(tiles):
-    if len(tiles) == 16:
+    if len(tiles) == (ROWS * COLS):
+        print("game over")
         return "lost"
 
+    unblock_tiles(tiles)
     row, col = get_random_pos(tiles)
-    tiles[f"{row}{col}"] = Tile(random.choice([2, 4]), row, col)
+
+    tiles[f"{row}{col}"] = Tile(random.choice([0]), row, col)
     return "continue"
+
+
+def unblock_tiles(tiles):
+    for tile in tiles.values():
+        if tile.value == 0:
+            tile.value = random.randrange(1, 99)
 
 
 def update_tiles(window, tiles, sorted_tiles):
@@ -223,7 +239,7 @@ def generate_tiles():
     tiles = {}
     for _ in range(2):
         row, col = get_random_pos(tiles)
-        tiles[f"{row}{col}"] = Tile(2, row, col)
+        tiles[f"{row}{col}"] = Tile(random.randrange(1, 99), row, col)
 
     return tiles
 
