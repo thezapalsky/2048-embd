@@ -52,7 +52,7 @@ class Tile:
         # color_index = int(math.log2(self.value)) - 1
         # color = self.COLORS[color_index]
         # return color
-        if self.value == 0:
+        if self.value in [0, 1, 2]:
             return (237, 229, 218)
         else:
             return (238, 225, 201)
@@ -61,10 +61,15 @@ class Tile:
         color = self.get_color()
         pygame.draw.rect(window, color, (self.x, self.y, RECT_WIDTH, RECT_HEIGHT))
 
-        if self.value != 0:
-            text = FONT.render(str(self.value), 1, FONT_COLOR)
-        else:
+        if self.value == 0:
+            text = FONT.render("???", 1, FONT_COLOR)
+        elif self.value == 1:
+            text = FONT.render("??", 1, FONT_COLOR)
+        elif self.value == 2:
             text = FONT.render("?", 1, FONT_COLOR)
+        else:
+            text = FONT.render(str(self.value), 1, FONT_COLOR)
+
         window.blit(
             text,
             (
@@ -185,15 +190,15 @@ def move_tiles(window, tiles, clock, direction):
                 tile.move(delta)
             elif (
                 tile.value != next_tile.value
-                and tile.value != 0
-                and next_tile.value != 0
+                and tile.value not in [0, 1, 2]
+                and next_tile.value not in [0, 1, 2]
                 and tile not in blocks
                 and next_tile not in blocks
             ):
                 if merge_check(tile, next_tile):
                     tile.move(delta)
                 else:
-                    next_tile.value = random.randrange(1, 99)
+                    next_tile.value = random.randrange(3, 99)
                     sorted_tiles.pop(i)
                     blocks.add(next_tile)
             elif move_check(tile, next_tile):
@@ -215,16 +220,19 @@ def end_move(tiles):
         return "lost"
 
     unblock_tiles(tiles)
-    row, col = get_random_pos(tiles)
 
-    tiles[f"{row}{col}"] = Tile(random.choice([0]), row, col)
+    for _ in range(random.choice([1, 2])):
+        row, col = get_random_pos(tiles)
+        tiles[f"{row}{col}"] = Tile(random.choice([0]), row, col)
     return "continue"
 
 
 def unblock_tiles(tiles):
     for tile in tiles.values():
-        if tile.value == 0:
-            tile.value = random.randrange(1, 99)
+        if tile.value in [0, 1, 2]:
+            tile.value += 1
+        if tile.value == 3:
+            tile.value = random.randrange(3, 99)
 
 
 def update_tiles(window, tiles, sorted_tiles):
@@ -239,7 +247,7 @@ def generate_tiles():
     tiles = {}
     for _ in range(2):
         row, col = get_random_pos(tiles)
-        tiles[f"{row}{col}"] = Tile(random.randrange(1, 99), row, col)
+        tiles[f"{row}{col}"] = Tile(random.randrange(3, 99), row, col)
 
     return tiles
 
