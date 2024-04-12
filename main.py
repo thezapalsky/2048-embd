@@ -33,9 +33,10 @@ def add_words(wv, word1, word2):
     top1k = wv.most_similar(positive=[word1, word2], topn=1000)
     for item in top1k:
         print(item[0])
+        random.shuffle(WORDS)
         if item[0] in WORDS:
             return item[0]
-        print("not in words")
+        print("not in WORDS")
         return top1k[0][0]
     # return wv.most_similar(positive=[word1, word2], topn=1)[0][0]
 
