@@ -6,18 +6,21 @@ import random
 import math
 import requests
 import gensim.downloader as api
+import time
 
 
 def get_words_corpus():
 
-    word_site = "https://www.mit.edu/~ecprice/wordlist.10000"
+    # word_site = "https://www.mit.edu/~ecprice/wordlist.10000"
+    word_site = "https://raw.githubusercontent.com/edthrn/most-common-english-words/master/nouns.txt"
     response = requests.get(word_site)
     WORDS = response.content.splitlines()
+    WORDS = [word.decode("utf-8") for word in WORDS]
     return WORDS
 
 
 def get_random_word():
-    return random.choice(WORDS).decode("utf-8")
+    return random.choice(WORDS)
 
 
 def get_word2vec():
@@ -27,11 +30,18 @@ def get_word2vec():
 
 
 def add_words(wv, word1, word2):
-    return wv.most_similar(positive=[word1, word2], topn=1)[0][0]
+    top1k = wv.most_similar(positive=[word1, word2], topn=1000)
+    for item in top1k:
+        print(item[0])
+        if item[0] in WORDS:
+            return item[0]
+        print("not in words")
+        return top1k[0][0]
+    # return wv.most_similar(positive=[word1, word2], topn=1)[0][0]
 
 
-def subtract_words(wv, word1, word2):
-    return wv.most_similar(positive=[word1], negative=[word2], topn=1)[0][0]
+# def subtract_words(wv, word1, word2):
+#     return wv.most_similar(positive=[word1], negative=[word2], topn=1)[0][0]
 
 
 wv = get_word2vec()
@@ -231,9 +241,13 @@ def move_tiles(window, tiles, clock, direction):
                     tile.move(delta)
                 else:
                     # merging
+                    start_time = time.time()
                     next_tile.value = add_words(wv, tile.value, next_tile.value)
                     sorted_tiles.pop(i)
                     blocks.add(next_tile)
+                    end_time = time.time()
+                    print(f"merge time: {end_time - start_time}")
+
             elif move_check(tile, next_tile):
                 tile.move(delta)
             else:
