@@ -4,8 +4,40 @@
 import pygame
 import random
 import math
+import requests
+import gensim.downloader as api
 
+
+def get_words_corpus():
+
+    word_site = "https://www.mit.edu/~ecprice/wordlist.10000"
+    response = requests.get(word_site)
+    WORDS = response.content.splitlines()
+    return WORDS
+
+
+def get_random_word():
+    return random.choice(WORDS).decode("utf-8")
+
+
+def get_word2vec():
+    wv = api.load("word2vec-google-news-300")
+    print("word2vec loaded")
+    return wv
+
+
+def add_words(wv, word1, word2):
+    return wv.most_similar(positive=[word1, word2], topn=1)[0][0]
+
+
+def subtract_words(wv, word1, word2):
+    return wv.most_similar(positive=[word1], negative=[word2], topn=1)[0][0]
+
+
+wv = get_word2vec()
 pygame.init()
+WORDS = get_words_corpus()
+
 
 FPS = 60
 
@@ -21,7 +53,7 @@ OUTLINE_THICKNESS = 10
 BACKGROUND_COLOR = (205, 192, 180)
 FONT_COLOR = (119, 110, 101)
 
-FONT = pygame.font.SysFont("comicsans", 60, bold=True)
+FONT = pygame.font.SysFont("comicsans", 30, bold=True)
 MOVE_VEL = 40
 
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -198,7 +230,8 @@ def move_tiles(window, tiles, clock, direction):
                 if merge_check(tile, next_tile):
                     tile.move(delta)
                 else:
-                    next_tile.value = random.randrange(3, 99)
+                    # merging
+                    next_tile.value = add_words(wv, tile.value, next_tile.value)
                     sorted_tiles.pop(i)
                     blocks.add(next_tile)
             elif move_check(tile, next_tile):
@@ -232,7 +265,7 @@ def unblock_tiles(tiles):
         if tile.value in [0, 1, 2]:
             tile.value += 1
         if tile.value == 3:
-            tile.value = random.randrange(3, 99)
+            tile.value = get_random_word()
 
 
 def update_tiles(window, tiles, sorted_tiles):
@@ -247,7 +280,7 @@ def generate_tiles():
     tiles = {}
     for _ in range(2):
         row, col = get_random_pos(tiles)
-        tiles[f"{row}{col}"] = Tile(random.randrange(3, 99), row, col)
+        tiles[f"{row}{col}"] = Tile(get_random_word(), row, col)
 
     return tiles
 
